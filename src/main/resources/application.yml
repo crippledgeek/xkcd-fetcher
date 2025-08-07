@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: xkcd-fetcher
+  jackson:
+    default-property-inclusion: non_empty
+  threads:
+    virtual:
+      enabled: true
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.xml
+    user: xkcd
+    password: xkcd
+    url: jdbc:postgresql://localhost:5432/xkcd
+  datasource:
+    url: jdbc:postgresql://localhost:5432/xkcd
+    username: xkcd
+    password: xkcd
+    hikari:
+      auto-commit: false
+      maximum-pool-size: 10
+  jpa:
+    generate-ddl: false
+    hibernate:
+      ddl-auto:  validate
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
+    open-in-view: false
+    properties:
+      hibernate:
+        connection:
+          autocommit: false
+  quartz:
+    scheduler-name: xkcd-fetcher-scheduler
+    job-store-type: jdbc
+    properties:
+      org:
+        quartz:
+          org:
+            quartz:
+              jobStore:
+                driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+
+xkcd:
+  base-url: https://xkcd.com
+  scheduler:
+    initial-delay-in-minutes: 1
+    interval-in-minutes: 120
+
+
+logging:
+  level:
+    se.disabledsecurity.xkcd.fetcher: DEBUG
