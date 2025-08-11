@@ -13,11 +13,8 @@ import java.util.Optional;
 public interface ComicRepository extends JpaRepository<Comic, Long> {
     List<Comic> findByTitle(String title);
     
-    // Find comics by date
-    List<Comic> findByComicDateDate(LocalDate date);
-    
-    // Count comics by date (useful for checking if a date can be deleted)
-    long countByComicDateDate(LocalDate date);
+    // Find comics by publication date
+    List<Comic> findByPublicationDate(LocalDate date);
     
     Optional<Comic> findByComicNumber(Integer comicNumber);
 }

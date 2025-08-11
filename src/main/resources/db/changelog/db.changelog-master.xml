@@ -9,6 +9,7 @@
     <include file="changelogs/002-create-comic-date-table.xml" relativeToChangelogFile="true"/>
     <include file="changelogs/003-add-comic-number-column.xml" relativeToChangelogFile="true"/>
     <include file="changelogs/004-recreate-comic-date-structure.xml" relativeToChangelogFile="true"/>
+    <include file="changelogs/005-remove-comic-date.xml" relativeToChangelogFile="true"/>
     <include file="changelogs/liquibase.quartz.init.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

@@ -28,8 +28,6 @@ public class Comic {
     @Column(name = "alt", columnDefinition = "TEXT")
     private String alt;
     
-    // Many-to-One relationship: Many comics can share the same date
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "publication_date", referencedColumnName = "date")
-    private ComicDate comicDate;
+    @Column(name = "publication_date")
+    private LocalDate publicationDate;
  }

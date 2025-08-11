@@ -10,8 +10,10 @@ import se.disabledsecurity.xkcd.fetcher.external.model.Xkcd;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.DateTimeException;
+import java.time.LocalDate;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.SPRING, uses = ComicDateMapper.class)
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ComicMapper {
     
     // External XKCD -> Entity
@@ -19,7 +21,7 @@ public interface ComicMapper {
     @Mapping(target = "title", source = "title")
     @Mapping(target = "img", source = "img")
     @Mapping(target = "alt", source = "alt")
-    @Mapping(target = "comicDate", source = ".", qualifiedByName = "fromXkcd")
+    @Mapping(target = "publicationDate", source = ".", qualifiedByName = "dateFromXkcd")
     Comic fromXkcdToEntity(Xkcd xkcd);
 
     // Entity -> Internal model
@@ -29,7 +31,7 @@ public interface ComicMapper {
     @Mapping(target = "alt", source = "alt")
     @Mapping(target = "title", source = "title")
     @Mapping(target = "comicNumber", source = "comicNumber")
-    @Mapping(target = "publicationDate", source = "comicDate.date")
+    @Mapping(target = "publicationDate", source = "publicationDate")
     @Mapping(target = "imageUrl", source = "img", qualifiedByName = "stringToUrl")
     se.disabledsecurity.xkcd.fetcher.internal.model.Comic toInternal(Comic entity);
 
@@ -39,6 +41,21 @@ public interface ComicMapper {
         try {
             return new URL(url);
         } catch (MalformedURLException e) {
+            return null;
+        }
+    }
+
+    @Named("dateFromXkcd")
+    default LocalDate dateFromXkcd(Xkcd xkcd) {
+        if (xkcd == null || xkcd.year() == null || xkcd.month() == null || xkcd.day() == null) {
+            return null;
+        }
+        try {
+            int year = Integer.parseInt(xkcd.year());
+            int month = Integer.parseInt(xkcd.month());
+            int day = Integer.parseInt(xkcd.day());
+            return LocalDate.of(year, month, day);
+        } catch (NumberFormatException | DateTimeException e) {
             return null;
         }
     }
