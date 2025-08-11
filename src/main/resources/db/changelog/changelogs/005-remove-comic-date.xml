@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="005-drop-comic-date-and-fk" author="junie">
+        <!-- Drop foreign key from comic(publication_date) to comic_date(date) if it exists -->
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="fk_comic_publication_date"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="comic" constraintName="fk_comic_publication_date"/>
+    </changeSet>
+
+    <changeSet id="005-drop-comic-date-table" author="junie">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="comic_date"/>
+        </preConditions>
+        <dropTable tableName="comic_date"/>
+    </changeSet>
+
+</databaseChangeLog>

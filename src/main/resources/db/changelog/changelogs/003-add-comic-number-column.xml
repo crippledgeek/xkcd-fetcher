@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="3-add-comic-number-column" author="junie">
+        <addColumn tableName="comic">
+            <column name="comic_number" type="INT"/>
+        </addColumn>
+        <addUniqueConstraint tableName="comic" columnNames="comic_number" constraintName="uq_comic_comic_number"/>
+    </changeSet>
+
+</databaseChangeLog>
