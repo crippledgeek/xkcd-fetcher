@@ -1,35 +1,37 @@
 package se.disabledsecurity.xkcd.fetcher.mapper;
 
 import org.mapstruct.*;
-import se.disabledsecurity.xkcd.fetcher.entity.Comic;
 import se.disabledsecurity.xkcd.fetcher.entity.ComicDate;
-import se.disabledsecurity.xkcd.fetcher.entity.ComicDateId;
+import se.disabledsecurity.xkcd.fetcher.external.model.Xkcd;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ComicDateMapper {
-    @Mapping(target = "id.comicId", source = "id")
-    @Mapping(target = "id.date", expression = "java(java.time.LocalDate.now())")
-    @Mapping(target = "comic", source = "comic")
-    ComicDate toEntity(Comic comic);
-
-    @InheritInverseConfiguration(name = "toEntity")
-    @Mapping(target = "date", source = "id.date")
-    Comic toDto(ComicDate comicDate);
-
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    ComicDate partialUpdate(Comic comic, @MappingTarget ComicDate comicDate);
     
-    // This method is needed for MapStruct to convert Long to ComicDateId
-    default ComicDateId map(Long comicId) {
-        if (comicId == null) {
+    @Mapping(target = "comics", ignore = true)
+    ComicDate toComicDate(LocalDate date);
+    
+    default LocalDate toLocalDate(ComicDate comicDate) {
+        return comicDate != null ? comicDate.getDate() : null;
+    }
+    
+    @Named("fromXkcd")
+    default ComicDate fromXkcd(Xkcd xkcd) {
+        if (xkcd == null || xkcd.year() == null || xkcd.month() == null || xkcd.day() == null) {
             return null;
         }
-        ComicDateId id = new ComicDateId();
-        id.setComicId(comicId);
-        id.setDate(LocalDate.now());
-        return id;
+        try {
+            int year = Integer.parseInt(xkcd.year());
+            int month = Integer.parseInt(xkcd.month());
+            int day = Integer.parseInt(xkcd.day());
+            LocalDate date = LocalDate.of(year, month, day);
+            ComicDate comicDate = new ComicDate();
+            comicDate.setDate(date);
+            return comicDate;
+        } catch (NumberFormatException | DateTimeException e) {
+            return null;
+        }
     }
-
 }

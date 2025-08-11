@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="004-recreate-comic-date-structure" author="developer">
+        <validCheckSum>9:b82f614b85261af2f33d8d3d869ac5e4</validCheckSum>
+        <!-- Drop old table if it exists -->
+        <dropTable tableName="comic_date"/>
+        
+        <!-- Create new comic_date table with date as primary key and optional comic reference -->
+        <createTable tableName="comic_date">
+            <column name="date" type="DATE">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="comic_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        
+        <!-- Optional FK: comic_date.comic_id -> comic(id) -->
+        <addForeignKeyConstraint baseTableName="comic_date"
+                                 baseColumnNames="comic_id"
+                                 constraintName="fk_comic_date_comic_id_optional"
+                                 referencedTableName="comic"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+        
+        <!-- Add publication_date column (FK added in dedicated change) -->
+        <addColumn tableName="comic">
+            <column name="publication_date" type="DATE">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add FK constraint comic(publication_date) -> comic_date(date) -->
+        <addForeignKeyConstraint baseTableName="comic"
+                                 baseColumnNames="publication_date"
+                                 constraintName="fk_comic_publication_date"
+                                 referencedTableName="comic_date"
+                                 referencedColumnNames="date"/>
+
+        <!-- Optional: index for faster filtering by date -->
+        <createIndex tableName="comic" indexName="idx_comic_publication_date">
+            <column name="publication_date"/>
+        </createIndex>
+
+        
+        <!-- Drop obsolete comic.date column to avoid ambiguity -->
+        <dropColumn tableName="comic" columnName="date"/>
+        
+        <!-- Ensure text columns are TEXT -->
+        <modifyDataType tableName="comic" columnName="alt" newDataType="TEXT"/>
+        <modifyDataType tableName="comic" columnName="img" newDataType="TEXT"/>
+        <modifyDataType tableName="comic" columnName="title" newDataType="TEXT"/>
+    </changeSet>
+</databaseChangeLog>

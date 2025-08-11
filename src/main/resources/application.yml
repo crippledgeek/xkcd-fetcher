@@ -3,25 +3,29 @@ spring:
     name: xkcd-fetcher
   jackson:
     default-property-inclusion: non_empty
+
+
   threads:
     virtual:
       enabled: true
   liquibase:
-    change-log: classpath:/db/changelog/db.changelog-master.xml
+    url: jdbc:postgresql://localhost:5432/xkcd
+    change-log: classpath:db/changelog/db.changelog-master.xml
     user: xkcd
     password: xkcd
-    url: jdbc:postgresql://localhost:5432/xkcd
+
   datasource:
     url: jdbc:postgresql://localhost:5432/xkcd
     username: xkcd
     password: xkcd
+    driver-class-name: org.postgresql.Driver
     hikari:
+      maximum-pool-size: 1
       auto-commit: false
-      maximum-pool-size: 10
   jpa:
     generate-ddl: false
     hibernate:
-      ddl-auto:  validate
+      ddl-auto: validate
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
         implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
@@ -36,17 +40,18 @@ spring:
     properties:
       org:
         quartz:
-          org:
-            quartz:
-              jobStore:
-                driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+          jobStore:
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+          scheduler:
+            instanceId: AUTO
+          threadPool:
+            threadCount: 5
 
 xkcd:
   base-url: https://xkcd.com
   scheduler:
     initial-delay-in-minutes: 1
-    interval-in-minutes: 120
-
+    interval-in-minutes: 1
 
 logging:
   level:

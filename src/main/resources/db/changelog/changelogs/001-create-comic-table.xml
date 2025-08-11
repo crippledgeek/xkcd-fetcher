@@ -18,6 +18,6 @@
     </changeSet>
 
     <changeSet id="2-add-comic-sequence" author="matte">
-        <createSequence sequenceName="comic_SEQ" startValue="1" incrementBy="50"/>
+        <createSequence sequenceName="comic_seq" startValue="1" incrementBy="50"/>
     </changeSet>
 </databaseChangeLog>

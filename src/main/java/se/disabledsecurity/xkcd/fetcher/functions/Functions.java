@@ -7,11 +7,12 @@ import io.vavr.control.Option;
 import java.net.URI;
 import java.net.URL;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
+import java.util.function.IntFunction;
+import java.util.function.IntPredicate;
 
 public class Functions {
-    public static final Function<Integer, Predicate<Integer>> notEquals = value -> integer -> !integer.equals(value);
+    public static final IntFunction<IntPredicate> notEquals = value -> i -> i != value;
 
     public static ToIntFunction<String> toIntUnboxed = Integer::parseInt;
 

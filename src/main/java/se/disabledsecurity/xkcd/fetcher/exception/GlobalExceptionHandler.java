@@ -34,8 +34,24 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Internal Server Error");
         problemDetail.setInstance(request.getURI());
         problemDetail.setProperty("errorCode", "INTERNAL_SERVER_ERROR");
+        problemDetail.setProperty("errorMessage", ex.getMessage());
         problemDetail.setProperty("timestamp", Instant.now());
 
+        return problemDetail;
+    }
+
+    @ExceptionHandler(NoSuchComicFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ProblemDetail handleNoSuchComicFoundException(NoSuchComicFoundException ex, ServerHttpRequest request) {
+        log.error("No such comic found: {}", ex.getMessage(), ex);
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND, "No such comic found");
+
+        problemDetail.setTitle("Not Found");
+        problemDetail.setInstance(request.getURI());
+        problemDetail.setProperty("errorCode", "NOT_FOUND");
+        problemDetail.setProperty("errorMessage", ex.getMessage());
+        problemDetail.setProperty("timestamp", Instant.now());
         return problemDetail;
     }
 }

@@ -1,7 +1,8 @@
 package se.disabledsecurity.xkcd.fetcher.service;
 
-import reactor.core.publisher.Flux;
 import se.disabledsecurity.xkcd.fetcher.entity.Comic;
+
+import java.time.LocalDate;
 
 public interface DatabaseService {
     /**
@@ -9,7 +10,7 @@ public interface DatabaseService {
      *
      * @param comics the comics to save
      */
-    void saveComics(Flux<Comic> comics);
+    void saveComics(Iterable<Comic> comics);
 
     /**
      * Deletes all comics from the database.
@@ -30,5 +31,5 @@ public interface DatabaseService {
     /**
      * delete comic by date.
      */
-    void deleteComicByDate(java.time.LocalDate date);
+    void deleteComicByDate(LocalDate date);
 }

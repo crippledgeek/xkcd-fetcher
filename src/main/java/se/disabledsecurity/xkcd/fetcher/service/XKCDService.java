@@ -2,7 +2,6 @@ package se.disabledsecurity.xkcd.fetcher.service;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.service.annotation.GetExchange;
-import reactor.core.publisher.Mono;
 import se.disabledsecurity.xkcd.fetcher.external.model.Xkcd;
 
 /**
@@ -12,8 +11,8 @@ import se.disabledsecurity.xkcd.fetcher.external.model.Xkcd;
 public interface XKCDService {
 
     @GetExchange("/info.0.json")
-    Mono<Xkcd> getLatestComic();
+    Xkcd getLatestComic();
     @GetExchange("/{comicId}/info.0.json")
-    Mono<Xkcd> getComicById(@PathVariable int comicId);
+    Xkcd getComicById(@PathVariable int comicId);
 
 }

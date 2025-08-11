@@ -2,15 +2,11 @@ package se.disabledsecurity.xkcd.fetcher.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.support.WebClientAdapter;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 import se.disabledsecurity.xkcd.fetcher.common.XkcdProperties;
-import se.disabledsecurity.xkcd.fetcher.functions.Functions;
 import se.disabledsecurity.xkcd.fetcher.service.XKCDService;
-
-import java.net.URL;
 
 @Configuration(proxyBeanMethods = false)
 public class XkcdClient {
@@ -22,21 +18,21 @@ public class XkcdClient {
     }
 
     @Bean
-    public WebClient comicClient(WebClient.Builder builder) {
+    public RestClient comicClient(RestClient.Builder builder) {
         return builder
-                .baseUrl(properties.getBaseUrl().toString())
-                .defaultHeader("Accept", "application/json")
-                .defaultHeader("User-Agent", "XKCD Fetcher")
-                .defaultHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate") // Support multiple compression formats
-                .build();
+            .baseUrl(properties.getBaseUrl().toString())
+            .defaultHeader("Accept", "application/json")
+            .defaultHeader("User-Agent", "XKCD Fetcher")
+            .build();
     }
 
     @Bean
-    public XKCDService httpServiceProxyFactory(WebClient comicClient) {
+    public XKCDService httpServiceProxyFactory(RestClient comicClient) {
         return HttpServiceProxyFactory
-                .builderFor(WebClientAdapter.create(comicClient))
+                .builderFor(RestClientAdapter.create(comicClient))
                 .build()
                 .createClient(XKCDService.class);
     }
+
 
 }
