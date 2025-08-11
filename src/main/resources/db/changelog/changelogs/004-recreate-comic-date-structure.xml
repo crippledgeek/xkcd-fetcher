@@ -10,23 +10,13 @@
         <!-- Drop old table if it exists -->
         <dropTable tableName="comic_date"/>
         
-        <!-- Create new comic_date table with date as primary key and optional comic reference -->
+        <!-- Create new comic_date table with date as primary key -->
         <createTable tableName="comic_date">
             <column name="date" type="DATE">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="comic_id" type="BIGINT">
-                <constraints nullable="true"/>
-            </column>
         </createTable>
         
-        <!-- Optional FK: comic_date.comic_id -> comic(id) -->
-        <addForeignKeyConstraint baseTableName="comic_date"
-                                 baseColumnNames="comic_id"
-                                 constraintName="fk_comic_date_comic_id_optional"
-                                 referencedTableName="comic"
-                                 referencedColumnNames="id"
-                                 onDelete="SET NULL"/>
         
         <!-- Add publication_date column (FK added in dedicated change) -->
         <addColumn tableName="comic">
