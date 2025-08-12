@@ -9,7 +9,8 @@ import org.springframework.context.annotation.Configuration;
 import se.disabledsecurity.xkcd.fetcher.common.XkcdProperties;
 import se.disabledsecurity.xkcd.fetcher.jobs.ComicsJob;
 
-import java.time.Instant;
+
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
@@ -38,7 +39,12 @@ public class SchedulerConfiguration {
         return TriggerBuilder
                 .newTrigger()
                 .withIdentity(ComicsJob.class.getSimpleName())
-                .startAt(Date.from(Instant.now().plus(properties.getScheduler().getInitialDelayInMinutes(), ChronoUnit.MINUTES)))
+                .startAt(Date.from(
+                        LocalDateTime.now()
+                                .plusMinutes(properties.getScheduler().getInitialDelayInMinutes())
+                                .atZone(ZoneId.systemDefault())
+                                .toInstant()
+                ))
                 .forJob(jobADetails)
                 .withSchedule(simpleSchedule()
                         .withIntervalInMinutes(properties.getScheduler().getIntervalInMinutes())
