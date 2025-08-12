@@ -42,7 +42,7 @@ public class SchedulerConfiguration {
                 .startAt(Date.from(
                         LocalDateTime.now()
                                 .plusMinutes(properties.getScheduler().getInitialDelayInMinutes())
-                                .atZone(ZoneId.systemDefault())
+                                .atZone(ZoneId.from(ZoneOffset.UTC))
                                 .toInstant()
                 ))
                 .forJob(jobADetails)
