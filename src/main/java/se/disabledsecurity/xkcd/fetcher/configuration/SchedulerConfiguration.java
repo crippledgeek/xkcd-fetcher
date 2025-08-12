@@ -40,7 +40,7 @@ public class SchedulerConfiguration {
                 .newTrigger()
                 .withIdentity(ComicsJob.class.getSimpleName())
                 .startAt(Date.from(
-                        LocalDateTime.now()
+                        LocalDateTime.now(Clock.systemUTC())
                                 .plusMinutes(properties.getScheduler().getInitialDelayInMinutes())
                                 .atZone(ZoneId.from(ZoneOffset.UTC))
                                 .toInstant()
