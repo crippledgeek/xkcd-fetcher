@@ -20,7 +20,7 @@ spring:
     password: xkcd
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 1
+      maximum-pool-size: 10
       auto-commit: false
   jpa:
     generate-ddl: false
@@ -34,19 +34,6 @@ spring:
       hibernate:
         connection:
           autocommit: false
-  quartz:
-    scheduler-name: xkcd-fetcher-scheduler
-    job-store-type: jdbc
-    properties:
-      org:
-        quartz:
-          jobStore:
-            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-          scheduler:
-            instanceId: AUTO
-          threadPool:
-            threadCount: 5
-
 xkcd:
   base-url: https://xkcd.com
   scheduler:
@@ -56,3 +43,15 @@ xkcd:
 logging:
   level:
     se.disabledsecurity.xkcd.fetcher: DEBUG
+
+jobrunr:
+  background-job-server:
+    enabled: true
+  dashboard:
+    enabled: false
+org:
+  jobrunr:
+    dashboard:
+      enabled: true
+    background-job-server:
+      enabled: true

@@ -3,6 +3,7 @@ package se.disabledsecurity.xkcd.fetcher.service;
 import se.disabledsecurity.xkcd.fetcher.entity.Comic;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 public interface DatabaseService {
     /**
@@ -21,6 +22,7 @@ public interface DatabaseService {
      * Delete comic by title.
      */
     void deleteComicByTitle(String title);
+
     /**
      * Deletes a comic by its ID.
      *
@@ -32,4 +34,11 @@ public interface DatabaseService {
      * delete comic by date.
      */
     void deleteComicByDate(LocalDate date);
+
+    /**
+     * Gets the highest comic number stored in the database.
+     *
+     * @return the highest comic number, or empty if no comics exist
+     */
+    Optional<Integer> getHighestComicNumber();
 }

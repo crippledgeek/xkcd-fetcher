@@ -8,6 +8,7 @@ import se.disabledsecurity.xkcd.fetcher.repository.ComicRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -84,5 +85,10 @@ public class PostgresDatabaseService implements DatabaseService {
         comicRepository.deleteAll(comics);
         comicRepository.flush();
         log.debug("Comics with date {} deleted (if any existed)", date);
+    }
+
+    @Override
+    public Optional<Integer> getHighestComicNumber() {
+        return comicRepository.findHighestComicNumber();
     }
 }
