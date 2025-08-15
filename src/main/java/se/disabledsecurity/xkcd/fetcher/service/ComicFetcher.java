@@ -40,6 +40,7 @@ public class ComicFetcher implements ComicService {
         }
 
         List<Xkcd> fetchedComics = IntStream.rangeClosed(startId, latestId)
+                .parallel()
                 .filter(Functions.notEquals.apply(404))
                 .mapToObj(this::getComicById)
                 .toList();
