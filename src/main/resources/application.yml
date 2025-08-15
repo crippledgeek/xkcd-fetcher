@@ -45,7 +45,7 @@ spring:
           scheduler:
             instanceId: AUTO
           threadPool:
-            threadCount: 5
+            threadCount: 1
 
 xkcd:
   base-url: https://xkcd.com

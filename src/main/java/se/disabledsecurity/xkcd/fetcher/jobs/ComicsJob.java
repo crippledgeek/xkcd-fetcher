@@ -1,6 +1,7 @@
 package se.disabledsecurity.xkcd.fetcher.jobs;
 
 import lombok.extern.slf4j.Slf4j;
+import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -9,6 +10,7 @@ import se.disabledsecurity.xkcd.fetcher.external.model.Xkcd;
 import se.disabledsecurity.xkcd.fetcher.service.ComicService;
 
 @Service
+@DisallowConcurrentExecution
 @Slf4j
 public class ComicsJob implements Job {
 

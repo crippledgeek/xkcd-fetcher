@@ -43,14 +43,11 @@ public class SchedulerConfiguration {
                         LocalDateTime.now()
                                 .plusMinutes(properties.getScheduler().getInitialDelayInMinutes())
                                 .atZone(ZoneId.systemDefault())
-                                .toInstant()
-                ))
+                                .toInstant()))
                 .forJob(jobADetails)
                 .withSchedule(simpleSchedule()
                         .withIntervalInMinutes(properties.getScheduler().getIntervalInMinutes())
-                        .repeatForever()
-                        .build()
-                        .getScheduleBuilder())
+                        .repeatForever())
                 .build();
     }
 
