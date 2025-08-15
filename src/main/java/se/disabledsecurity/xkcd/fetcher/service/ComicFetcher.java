@@ -29,17 +29,8 @@ public class ComicFetcher implements ComicService {
     @Override
     public Iterable<Xkcd> getAllComics() {
         int latestId = getLatestComicId();
-
-        int startId = getHighestSavedComicNumber()
-                .map(id -> id + 1)
-                .orElse(1);
-
-        if (startId > latestId) {
-            log.info("No new comics to fetch (highest saved: {}, latest: {})", startId - 1, latestId);
-            return List.of();
-        }
-
-        List<Xkcd> fetchedComics = IntStream.rangeClosed(startId, latestId)
+        List<Xkcd> fetchedComics = IntStream.rangeClosed(1, latestId)
+                .parallel()
                 .filter(Functions.notEquals.apply(404))
                 .mapToObj(this::getComicById)
                 .toList();

@@ -34,6 +34,19 @@ spring:
       hibernate:
         connection:
           autocommit: false
+  quartz:
+    scheduler-name: xkcd-fetcher-scheduler
+    job-store-type: jdbc
+    properties:
+      org:
+        quartz:
+          jobStore:
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+          scheduler:
+            instanceId: AUTO
+          threadPool:
+            threadCount: 1
+
 xkcd:
   base-url: https://xkcd.com
   scheduler:
