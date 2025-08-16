@@ -10,12 +10,14 @@ import se.disabledsecurity.xkcd.fetcher.common.XkcdProperties;
 import se.disabledsecurity.xkcd.fetcher.jobs.ComicsJob;
 
 
-import java.time.*;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class SchedulerConfiguration {
 
     private final XkcdProperties properties;
@@ -25,7 +27,7 @@ public class SchedulerConfiguration {
     }
 
     @Bean
-    public JobDetail jobADetails() {
+    public JobDetail comicsJobDetail() {
         return JobBuilder
                 .newJob(ComicsJob.class)
                 .withIdentity("getComicsJob")
@@ -34,7 +36,7 @@ public class SchedulerConfiguration {
     }
 
     @Bean
-    public Trigger jobATrigger(JobDetail jobADetails) {
+    public Trigger comicJobTrigger(JobDetail comicsJobDetail) {
         return TriggerBuilder
                 .newTrigger()
                 .withIdentity(ComicsJob.class.getSimpleName())
@@ -43,7 +45,7 @@ public class SchedulerConfiguration {
                                 .plusMinutes(properties.getScheduler().getInitialDelayInMinutes())
                                 .atZone(ZoneOffset.UTC)
                                 .toInstant()))
-                .forJob(jobADetails)
+                .forJob(comicsJobDetail)
                 .withSchedule(simpleSchedule()
                         .withIntervalInMinutes(properties.getScheduler()
                                 .getIntervalInMinutes())
