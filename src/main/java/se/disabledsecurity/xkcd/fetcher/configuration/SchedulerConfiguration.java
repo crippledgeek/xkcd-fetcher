@@ -11,7 +11,6 @@ import se.disabledsecurity.xkcd.fetcher.jobs.ComicsJob;
 
 
 import java.time.*;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
@@ -40,15 +39,18 @@ public class SchedulerConfiguration {
                 .newTrigger()
                 .withIdentity(ComicsJob.class.getSimpleName())
                 .startAt(Date.from(
-                        LocalDateTime.now()
+                        LocalDateTime.now(Clock.system(ZoneOffset.UTC))
                                 .plusMinutes(properties.getScheduler().getInitialDelayInMinutes())
-                                .atZone(ZoneId.systemDefault())
+                                .atZone(ZoneOffset.UTC)
                                 .toInstant()))
                 .forJob(jobADetails)
                 .withSchedule(simpleSchedule()
-                        .withIntervalInMinutes(properties.getScheduler().getIntervalInMinutes())
-                        .repeatForever())
+                        .withIntervalInMinutes(properties.getScheduler()
+                                .getIntervalInMinutes())
+                        .repeatForever()
+                        .withMisfireHandlingInstructionIgnoreMisfires())
                 .build();
     }
+
 
 }
