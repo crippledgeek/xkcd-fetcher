@@ -47,8 +47,7 @@ public class SchedulerConfiguration {
                 .withSchedule(simpleSchedule()
                         .withIntervalInMinutes(properties.getScheduler()
                                 .getIntervalInMinutes())
-                        .repeatForever()
-                        .withMisfireHandlingInstructionIgnoreMisfires())
+                        .repeatForever())
                 .build();
     }
 

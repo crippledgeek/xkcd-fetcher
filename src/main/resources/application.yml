@@ -51,7 +51,7 @@ xkcd:
   base-url: https://xkcd.com
   scheduler:
     initial-delay-in-minutes: 1
-    interval-in-minutes: 1
+    interval-in-minutes: 60
 
 logging:
   level:
