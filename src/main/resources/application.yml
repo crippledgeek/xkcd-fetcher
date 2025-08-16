@@ -4,7 +4,6 @@ spring:
   jackson:
     default-property-inclusion: non_empty
 
-
   threads:
     virtual:
       enabled: true
@@ -51,20 +50,10 @@ xkcd:
   base-url: https://xkcd.com
   scheduler:
     initial-delay-in-minutes: 1
-    interval-in-minutes: 60
+    #interval-in-minutes: 1440 # 24 hours
+    interval-in-minutes: 30
+
 
 logging:
   level:
     se.disabledsecurity.xkcd.fetcher: DEBUG
-
-jobrunr:
-  background-job-server:
-    enabled: true
-  dashboard:
-    enabled: false
-org:
-  jobrunr:
-    dashboard:
-      enabled: true
-    background-job-server:
-      enabled: true
