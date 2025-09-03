@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import se.disabledsecurity.xkcd.fetcher.entity.Comic;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +18,9 @@ public interface ComicRepository extends JpaRepository<Comic, Long> {
     List<Comic> findByPublicationDate(LocalDate date);
 
     Optional<Comic> findByComicNumber(Integer comicNumber);
+
+    // Batch lookup by comic numbers (optimization for saveComics)
+    List<Comic> findByComicNumberIn(Collection<Integer> comicNumbers);
 
     // Highest saved comic number (used to fetch incrementally)
     @Query("select max(c.comicNumber) from Comic c")

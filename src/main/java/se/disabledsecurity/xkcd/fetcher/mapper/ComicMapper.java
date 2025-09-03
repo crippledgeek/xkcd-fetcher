@@ -7,11 +7,11 @@ import org.mapstruct.ReportingPolicy;
 import org.mapstruct.Named;
 import se.disabledsecurity.xkcd.fetcher.entity.Comic;
 import se.disabledsecurity.xkcd.fetcher.external.model.Xkcd;
+import se.disabledsecurity.xkcd.fetcher.functions.Functions;
 
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.util.List;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ComicMapper {
@@ -23,6 +23,9 @@ public interface ComicMapper {
     @Mapping(target = "alt", source = "alt")
     @Mapping(target = "publicationDate", source = ".", qualifiedByName = "dateFromXkcd")
     Comic fromXkcdToEntity(Xkcd xkcd);
+
+    // Iterable mapping: External XKCD list -> Entity list
+    List<Comic> fromXkcdToEntity(List<Xkcd> xkcds);
 
     // Entity -> Internal model
     @Mapping(target = "news", expression = "java(null)")
@@ -37,26 +40,13 @@ public interface ComicMapper {
 
     @Named("stringToUrl")
     default URL stringToUrl(String url) {
-        if (url == null || url.isBlank()) return null;
-        try {
-            return new URL(url);
-        } catch (MalformedURLException e) {
-            return null;
-        }
+        return Functions.toUrl.apply(url)
+                .getOrElseThrow(throwable -> new RuntimeException("Invalid URL format: %s".formatted(url), throwable));
     }
 
     @Named("dateFromXkcd")
     default LocalDate dateFromXkcd(Xkcd xkcd) {
-        if (xkcd == null || xkcd.year() == null || xkcd.month() == null || xkcd.day() == null) {
-            return null;
-        }
-        try {
-            int year = Integer.parseInt(xkcd.year());
-            int month = Integer.parseInt(xkcd.month());
-            int day = Integer.parseInt(xkcd.day());
-            return LocalDate.of(year, month, day);
-        } catch (NumberFormatException | DateTimeException e) {
-            return null;
-        }
+      return Functions.toDate.apply(xkcd.year(), xkcd.month(), xkcd.day());
+
     }
 }

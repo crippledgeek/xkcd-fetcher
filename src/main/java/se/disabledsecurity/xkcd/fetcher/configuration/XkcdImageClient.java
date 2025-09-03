@@ -7,34 +7,33 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 import se.disabledsecurity.xkcd.fetcher.common.XkcdProperties;
-import se.disabledsecurity.xkcd.fetcher.service.XKCDComicService;
+import se.disabledsecurity.xkcd.fetcher.service.XKCDImageService;
 
 import java.net.http.HttpClient;
 
 @Configuration(proxyBeanMethods = false)
-public class XkcdClient {
+public class XkcdImageClient {
 
     private final XkcdProperties properties;
 
-    public XkcdClient(XkcdProperties properties) {
+    public XkcdImageClient(XkcdProperties properties) {
         this.properties = properties;
     }
 
     @Bean
-    public RestClient comicClient(RestClient.Builder builder, JdkClientHttpRequestFactory requestFactory) {
+    public RestClient comicImageClient(RestClient.Builder builder, JdkClientHttpRequestFactory requestFactory) {
         return builder
-            .requestFactory(requestFactory)
-            .baseUrl(properties.getComicBaseUrl().toString())
-            .defaultHeader("Accept", "application/json")
-            .defaultHeader("User-Agent", "XKCD Fetcher")
-            .build();
+                .requestFactory(requestFactory)
+                .baseUrl(properties.getImageBaseUrl().toString())
+                .defaultHeader("User-Agent", "XKCD Fetcher - Image Client")
+                .build();
     }
 
     @Bean
-    public XKCDComicService comicServiceProxyFactory(RestClient comicClient) {
+    public XKCDImageService imageServiceProxyFactory(RestClient comicImageClient) {
         return HttpServiceProxyFactory
-                .builderFor(RestClientAdapter.create(comicClient))
+                .builderFor(RestClientAdapter.create(comicImageClient))
                 .build()
-                .createClient(XKCDComicService.class);
+                .createClient(XKCDImageService.class);
     }
 }

@@ -8,7 +8,7 @@ import se.disabledsecurity.xkcd.fetcher.external.model.Xkcd;
  * Service interface for fetching XKCD comics.
  * Provides methods to retrieve the latest comic and a specific comic by its ID.
  */
-public interface XKCDService {
+public interface XKCDComicService {
 
     @GetExchange("/info.0.json")
     Xkcd getLatestComic();

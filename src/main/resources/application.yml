@@ -12,7 +12,6 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.xml
     user: xkcd
     password: xkcd
-
   datasource:
     url: jdbc:postgresql://localhost:5432/xkcd
     username: xkcd
@@ -45,15 +44,24 @@ spring:
             instanceId: AUTO
           threadPool:
             threadCount: 1
-
 xkcd:
-  base-url: https://xkcd.com
+  comic-base-url: https://xkcd.com
+  image-base-url: https://imgs.xkcd.com
+  excluded-comic-numbers:
+    - 404
+    - 1663
+    - 1608
   scheduler:
     initial-delay-in-minutes: 1
-    #interval-in-minutes: 1440 # 24 hours
-    interval-in-minutes: 30
+    # interval-in-minutes: 1440 # 24 hours
+    interval-in-minutes: 1
 
 
-logging:
-  level:
-    se.disabledsecurity.xkcd.fetcher: DEBUG
+garage:
+  endpoint: http://localhost:3900
+  region: garage
+  bucket: xkcd-comics
+  credentials:
+    access-key: GKafa8532bf619be9ec2af2efa
+    secret-key: 6d4e259841952985e1f92d01a24f6f45f63578f1c4461a61e4c0228326dd6481
+
