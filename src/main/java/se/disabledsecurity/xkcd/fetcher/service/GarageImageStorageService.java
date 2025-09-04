@@ -28,7 +28,8 @@ import java.util.concurrent.locks.StampedLock;
 import io.minio.http.Method;
 
 /**
- * MinIO/Garage-based storage service for XKCD images using StampedLock for bucket initialization.
+ * MinIO/Garage-based storage service for XKCD images.
+ * Ensures the specified bucket exists and provides methods to save, delete, check existence, and
  */
 @Slf4j
 @Service
