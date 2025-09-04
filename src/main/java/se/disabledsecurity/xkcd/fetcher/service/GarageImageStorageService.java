@@ -213,7 +213,6 @@ public class GarageImageStorageService implements ImageStorageService {
 
     @Override
     public boolean imageExistsForComic(Comic comic) {
-        String imageKey = "xkcd/" + comic.getComicNumber();
-        return exists(imageKey);
+       return exists("xkcd/%d".formatted(comic.getComicNumber()));
     }
 }
