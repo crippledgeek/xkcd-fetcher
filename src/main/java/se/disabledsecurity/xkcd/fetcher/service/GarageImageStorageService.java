@@ -24,11 +24,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.StampedLock;
 import io.minio.http.Method;
 
 /**
- * MinIO/Garage-based storage service for XKCD images.
+ * MinIO/Garage-based storage service for XKCD images using StampedLock for bucket initialization.
  */
 @Slf4j
 @Service
@@ -37,7 +37,8 @@ public class GarageImageStorageService implements ImageStorageService {
     private final MinioClient minioClient;
     private final GarageProperties garageProperties;
     private final ImageDetectionService imageDetectionService;
-    private final AtomicBoolean bucketEnsured = new AtomicBoolean(false);
+    private final StampedLock bucketLock = new StampedLock();
+    private volatile boolean bucketEnsured = false;
 
     public GarageImageStorageService(MinioClient minioClient,
                                      GarageProperties garageProperties,
@@ -153,32 +154,64 @@ public class GarageImageStorageService implements ImageStorageService {
         return urlBuilder.toString();
     }
 
-    private void ensureBucketExistsOnce() throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        if (bucketEnsured.get()) {
-            return;
+    private void ensureBucketExistsOnce() throws IOException, ServerException, InsufficientDataException,
+            ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException,
+            XmlParserException, InternalException {
+
+        // Try optimistic read first
+        long stamp = bucketLock.tryOptimisticRead();
+        if (bucketEnsured) {
+            if (bucketLock.validate(stamp)) {
+                return; // Fast path - bucket already ensured
+            }
         }
 
-        synchronized (bucketEnsured) {
-            if (bucketEnsured.get()) {
-                return;
+        // Fall back to read lock
+        stamp = bucketLock.readLock();
+        try {
+            if (bucketEnsured) {
+                return; // Another thread already ensured the bucket
             }
 
-            String bucket = garageProperties.getBucket();
-
-            boolean exists = minioClient.bucketExists(
-                    BucketExistsArgs.builder().bucket(bucket).build());
-
-            if (!exists) {
-                log.error("Bucket '{}' does not exist and cannot be created automatically with Garage. " +
-                        "Please create the bucket through the Garage admin interface.", bucket);
-                throw new IllegalStateException("Bucket '" + bucket + "' does not exist. " +
-                        "Buckets must be created manually in Garage.");
+            // Try to upgrade to write lock
+            long writeStamp = bucketLock.tryConvertToWriteLock(stamp);
+            if (writeStamp != 0) {
+                stamp = writeStamp;
+                performBucketCheck();
+            } else {
+                // Couldn't convert, release read lock and acquire write lock
+                bucketLock.unlockRead(stamp);
+                stamp = bucketLock.writeLock();
+                if (!bucketEnsured) {
+                    performBucketCheck();
+                }
             }
-
-            log.debug("Bucket '{}' exists and is ready for use", bucket);
-            bucketEnsured.set(true);
+        } finally {
+            bucketLock.unlock(stamp);
         }
     }
+
+    private void performBucketCheck() throws IOException, ServerException, InsufficientDataException,
+            ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException,
+            XmlParserException, InternalException {
+
+        String bucket = garageProperties.getBucket();
+
+        boolean exists = minioClient.bucketExists(
+                BucketExistsArgs.builder().bucket(bucket).build());
+
+        if (!exists) {
+            log.error("Bucket '{}' does not exist and cannot be created automatically with Garage. " +
+                    "Please create the bucket through the Garage admin interface.", bucket);
+            throw new IllegalStateException("Bucket '" + bucket + "' does not exist. " +
+                    "Buckets must be created manually in Garage.");
+        }
+
+        log.debug("Bucket '{}' exists and is ready for use", bucket);
+        bucketEnsured = true;
+    }
+
+    @Override
     public boolean imageExistsForComic(Comic comic) {
         String imageKey = "xkcd/" + comic.getComicNumber();
         return exists(imageKey);
