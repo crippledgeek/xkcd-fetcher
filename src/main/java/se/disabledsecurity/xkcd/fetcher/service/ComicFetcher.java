@@ -24,22 +24,22 @@ public class ComicFetcher implements ComicService {
     private static final int BATCH_SIZE = 100;
 
     private final XKCDComicService xkcdComicService;
-    private final DatabaseService databaseService;
+    private final DatabaseService posgreDatabaseService;
     private final ComicMapper comicMapper;
-    private final ImageStorageService imageStorageService;
+    private final ImageStorageService garageImageStorageService;
     private final XKCDImageService xkcdImageService;
     private final XkcdProperties xkcdProperties;
 
     public ComicFetcher(XKCDComicService xkcdComicService,
-                        DatabaseService databaseService,
+                        DatabaseService posgreDatabaseService,
                         ComicMapper comicMapper,
-                        ImageStorageService imageStorageService,
+                        ImageStorageService garageImageStorageService,
                         XKCDImageService xkcdImageService,
                         XkcdProperties xkcdProperties) {
         this.xkcdComicService = xkcdComicService;
-        this.databaseService = databaseService;
+        this.posgreDatabaseService = posgreDatabaseService;
         this.comicMapper = comicMapper;
-        this.imageStorageService = imageStorageService;
+        this.garageImageStorageService = garageImageStorageService;
         this.xkcdImageService = xkcdImageService;
         this.xkcdProperties = xkcdProperties;
     }
@@ -76,7 +76,7 @@ public class ComicFetcher implements ComicService {
     public void backfillImagesFromDb() {
         Try.run(() -> {
             List<se.disabledsecurity.xkcd.fetcher.entity.Comic> allComics =
-                    List.ofAll(databaseService.findAllComics());
+                    List.ofAll(posgreDatabaseService.findAllComics());
 
             log.info("Starting image backfill check for {} comics", allComics.size());
 
@@ -102,7 +102,7 @@ public class ComicFetcher implements ComicService {
     }
 
     private boolean needsImageBackfill(Comic comic) {
-        boolean exists = imageStorageService.imageExistsForComic(comic);
+        boolean exists = garageImageStorageService.imageExistsForComic(comic);
         if (!exists) {
             log.info("Comic {} needs backfill - image does not exist in storage", comic.getComicNumber());
         }
@@ -154,7 +154,7 @@ public class ComicFetcher implements ComicService {
         return Option.of(xkcdComics)
                 .filter(comics -> !comics.isEmpty())
                 .map(comics -> Try.of(() -> comicMapper.fromXkcdToEntity(comics))
-                        .map(databaseService::saveComics)
+                        .map(posgreDatabaseService::saveComics)
                         .onSuccess(saved -> log.debug("Successfully saved batch of {} comics", saved.size()))
                         .onFailure(throwable -> log.error("Failed to save batch of {} comics",
                                 comics.size(), throwable))
@@ -185,7 +185,7 @@ public class ComicFetcher implements ComicService {
 
     private Try<Integer> getHighestSavedComicNumber() {
         return Try.of(() ->
-                Option.of(databaseService.getHighestComicNumber())
+                Option.of(posgreDatabaseService.getHighestComicNumber())
                         .flatMap(opt -> Option.of(opt.orElse(null)))
                         .map(Functions.toUnboxed::applyAsInt)
                         .getOrElse(0)
@@ -210,7 +210,7 @@ public class ComicFetcher implements ComicService {
                 .filter(this::isValidImageData)
                 .map(data -> {
                     log.debug("Successfully fetched image for comic {} (size: {} bytes)", xkcd.num(), data.length);
-                    imageStorageService.save(key, data);
+                    garageImageStorageService.save(key, data);
                     return data;
                 })
                 .onFailure(e -> handleImageCacheFailure(e, xkcd.num(), fileName));
@@ -233,7 +233,7 @@ public class ComicFetcher implements ComicService {
                             .map(data -> {
                                 log.info("Successfully fetched and validated image for comic {} (size: {} bytes)",
                                         entity.getComicNumber(), data.length);
-                                imageStorageService.save(key, data);
+                                garageImageStorageService.save(key, data);
                                 log.info("Successfully saved image for comic {} to storage", entity.getComicNumber());
                                 return data;
                             })

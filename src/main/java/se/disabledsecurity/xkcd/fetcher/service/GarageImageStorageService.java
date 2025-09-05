@@ -8,28 +8,20 @@ import io.minio.RemoveObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
 import io.minio.errors.ErrorResponseException;
-import io.minio.errors.InsufficientDataException;
-import io.minio.errors.InternalException;
-import io.minio.errors.InvalidResponseException;
-import io.minio.errors.ServerException;
-import io.minio.errors.XmlParserException;
 import io.vavr.control.Try;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import se.disabledsecurity.xkcd.fetcher.common.GarageProperties;
 import se.disabledsecurity.xkcd.fetcher.entity.Comic;
+import se.disabledsecurity.xkcd.fetcher.exception.BucketException;
 import se.disabledsecurity.xkcd.fetcher.exception.ImageStorageException;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.locks.StampedLock;
 import io.minio.http.Method;
 
 /**
- * MinIO/Garage-based storage service for XKCD images.
- * Ensures the specified bucket exists and provides methods to save, delete, check existence, and
+ * MinIO/Garage-based storage service for XKCD images using StampedLock for bucket initialization.
  */
 @Slf4j
 @Service
@@ -37,7 +29,7 @@ public class GarageImageStorageService implements ImageStorageService {
 
     private final MinioClient minioClient;
     private final GarageProperties garageProperties;
-    private final ImageDetectionService imageDetectionService;
+    private final ImageDetectionService tikaImageDetectionService;
     private final StampedLock bucketLock = new StampedLock();
     private volatile boolean bucketEnsured = false;
 
@@ -46,7 +38,7 @@ public class GarageImageStorageService implements ImageStorageService {
                                      ImageDetectionService imageDetectionService) {
         this.minioClient = minioClient;
         this.garageProperties = garageProperties;
-        this.imageDetectionService = imageDetectionService;
+        this.tikaImageDetectionService = imageDetectionService;
     }
 
     @Override
@@ -55,7 +47,7 @@ public class GarageImageStorageService implements ImageStorageService {
                 .flatMap(ignored ->
                         Try.withResources(() -> new ByteArrayInputStream(content))
                                 .of(bais -> {
-                                    String detectedContentType = imageDetectionService
+                                    String detectedContentType = tikaImageDetectionService
                                             .detectContentType(content, contentType, key);
 
                                     var args = PutObjectArgs.builder()
@@ -155,9 +147,7 @@ public class GarageImageStorageService implements ImageStorageService {
         return urlBuilder.toString();
     }
 
-    private void ensureBucketExistsOnce() throws IOException, ServerException, InsufficientDataException,
-            ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException,
-            XmlParserException, InternalException {
+    private void ensureBucketExistsOnce() {
 
         // Try optimistic read first
         long stamp = bucketLock.tryOptimisticRead();
@@ -192,28 +182,33 @@ public class GarageImageStorageService implements ImageStorageService {
         }
     }
 
-    private void performBucketCheck() throws IOException, ServerException, InsufficientDataException,
-            ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException,
-            XmlParserException, InternalException {
-
+    private void performBucketCheck() {
         String bucket = garageProperties.getBucket();
 
-        boolean exists = minioClient.bucketExists(
-                BucketExistsArgs.builder().bucket(bucket).build());
+        try {
+            boolean exists = minioClient.bucketExists(
+                    BucketExistsArgs.builder().bucket(bucket).build());
 
-        if (!exists) {
-            log.error("Bucket '{}' does not exist and cannot be created automatically with Garage. " +
-                    "Please create the bucket through the Garage admin interface.", bucket);
-            throw new IllegalStateException("Bucket '" + bucket + "' does not exist. " +
-                    "Buckets must be created manually in Garage.");
+            if (!exists) {
+                String message = String.format("Bucket '%s' does not exist and cannot be created automatically with Garage. " +
+                        "Please create the bucket through the Garage admin interface.", bucket);
+                log.error(message);
+                throw new BucketException(message);
+            }
+
+            log.debug("Bucket '{}' exists and is ready for use", bucket);
+            bucketEnsured = true;
+        } catch (BucketException e) {
+            throw e; // Re-throw our custom exception
+        } catch (Exception e) {
+            String message = String.format("Failed to verify bucket '%s' existence", bucket);
+            log.error("{}: {}", message, e.getMessage(), e);
+            throw new BucketException(message, e);
         }
-
-        log.debug("Bucket '{}' exists and is ready for use", bucket);
-        bucketEnsured = true;
     }
 
     @Override
     public boolean imageExistsForComic(Comic comic) {
-       return exists("xkcd/%d".formatted(comic.getComicNumber()));
+        return exists("xkcd/%d".formatted(comic.getComicNumber()));
     }
 }
