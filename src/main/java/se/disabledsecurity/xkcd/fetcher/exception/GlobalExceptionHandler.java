@@ -92,4 +92,21 @@ public class GlobalExceptionHandler {
 
         return problemDetail;
     }
+    @ExceptionHandler(BucketException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ProblemDetail handleBucketException(BucketException ex, HttpServletRequest request) {
+        log.error("Bucket operation failed: {}", ex.getMessage(), ex);
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Storage bucket operation failed"
+        );
+
+        problemDetail.setTitle("Bucket Error");
+        problemDetail.setProperty("errorCode", "BUCKET_ERROR");
+        problemDetail.setProperty("errorMessage", ex.getMessage());
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
+    }
 }
