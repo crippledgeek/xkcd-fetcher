@@ -3,6 +3,8 @@ package se.disabledsecurity.xkcd.fetcher.service;
 import io.vavr.control.Try;
 import se.disabledsecurity.xkcd.fetcher.external.model.Xkcd;
 
+import java.util.List;
+
 public interface ComicService {
     /**
      * Fetches all comics.
@@ -10,7 +12,7 @@ public interface ComicService {
      * @return a Flux of all comics
      */
 
-   Try<Iterable<Xkcd>> getAllComics();
+    Try<List<Xkcd>> getAllComics();   // was Try<Iterable<Xkcd>>
 
     /**
      * Backfills/caches images for comics stored in the database when missing in object storage.

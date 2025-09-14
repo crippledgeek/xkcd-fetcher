@@ -62,6 +62,6 @@ garage:
   region: garage
   bucket: xkcd-comics
   credentials:
-    access-key: GKafa8532bf619be9ec2af2efa
-    secret-key: 6d4e259841952985e1f92d01a24f6f45f63578f1c4461a61e4c0228326dd6481
+    access-key: GK7f62badb97e1914dbe5519e4
+    secret-key: 46a84b6f65eab83259172c1008676a218280d3392a45f79ecad040feeba5b41d
 

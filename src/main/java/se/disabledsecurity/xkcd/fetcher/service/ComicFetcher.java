@@ -14,6 +14,7 @@ import se.disabledsecurity.xkcd.fetcher.functions.Functions;
 import se.disabledsecurity.xkcd.fetcher.internal.model.ComicRange;
 import se.disabledsecurity.xkcd.fetcher.mapper.ComicMapper;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -45,7 +46,7 @@ public class ComicFetcher implements ComicService {
     }
 
     @Override
-    public Try<Iterable<Xkcd>> getAllComics() {
+    public Try<java.util.List<Xkcd>> getAllComics() {
         log.info("Starting to fetch all comics");
 
         return getLatestComicId()
@@ -57,9 +58,7 @@ public class ComicFetcher implements ComicService {
                     log.info("All comics are already up to date");
                     return Try.success(java.util.List.of());
                 })
-                .peek(comics -> log.info("Successfully fetched and saved {} comics",
-                        comics.size()))
-                .map(list -> (Iterable<Xkcd>) list)
+                .peek(comics -> log.info("Successfully fetched and saved {} comics", comics.size()))
                 .recover(throwable -> {
                     log.error("Failed to fetch all comics", throwable);
                     throw new RuntimeException("Failed to fetch comics", throwable);
@@ -111,18 +110,13 @@ public class ComicFetcher implements ComicService {
 
     private java.util.List<Xkcd> fetchComicsInRange(int startId, int endId) {
         return Stream.rangeClosed(startId, endId)
-                .filter(id -> {
-                    if (xkcdProperties.getExcludedComicNumbers().contains(id)) {
-                        log.info("Skipping excluded comic {}", id);
-                        return false;
-                    }
-                    return true;
-                })
+                .filter(Functions.excludeComics(log).apply(xkcdProperties.getExcludedComicNumbers()))
                 .grouped(BATCH_SIZE)
                 .map(io.vavr.collection.List::ofAll)
                 .flatMap(batch -> Stream.ofAll(processBatch(batch)))
                 .toJavaList();
     }
+
 
     private java.util.List<Xkcd> processBatch(List<Integer> batch) {
         log.debug("Processing batch of {} comic IDs", batch.size());
@@ -200,49 +194,33 @@ public class ComicFetcher implements ComicService {
     }
 
     private void cacheSingleImage(Xkcd xkcd) {
-        String fileName = extractFileName(xkcd.img());
-        if (fileName.isBlank()) return;
-
-        String key = "xkcd/" + xkcd.num();
-        log.debug("Caching image for comic {} with key '{}'", xkcd.num(), key);
-
-        Try.of(() -> xkcdImageService.fetchImage(fileName))
-                .filter(this::isValidImageData)
-                .map(data -> {
-                    log.debug("Successfully fetched image for comic {} (size: {} bytes)", xkcd.num(), data.length);
-                    garageImageStorageService.save(key, data);
-                    return data;
-                })
-                .onFailure(e -> handleImageCacheFailure(e, xkcd.num(), fileName));
+        extractFileName(xkcd.img()).ifPresent(fileName -> fetchAndSaveImage(xkcd.num(), fileName));
     }
 
     private void backfillSingleImage(se.disabledsecurity.xkcd.fetcher.entity.Comic entity) {
         log.info("Processing backfill for comic {}", entity.getComicNumber());
 
-        Option.of(entity.getImg())
-                .filter(url -> !url.isBlank())
-                .map(this::extractFileName)
-                .filter(fileName -> !fileName.isBlank())
-                .peek(fileName -> {
-                    String key = "xkcd/" + entity.getComicNumber();
-                    log.info("Attempting to fetch image for comic {} with fileName '{}' and key '{}'",
-                            entity.getComicNumber(), fileName, key);
+        extractFileName(entity.getImg()).ifPresentOrElse(
+                fileName -> fetchAndSaveImage(entity.getComicNumber(), fileName),
+                () -> log.warn("Comic {} has no valid image URL or filename", entity.getComicNumber())
+        );
+    }
 
-                    Try.of(() -> xkcdImageService.fetchImage(fileName))
-                            .filter(this::isValidImageData)
-                            .map(data -> {
-                                log.info("Successfully fetched and validated image for comic {} (size: {} bytes)",
-                                        entity.getComicNumber(), data.length);
-                                garageImageStorageService.save(key, data);
-                                log.info("Successfully saved image for comic {} to storage", entity.getComicNumber());
-                                return data;
-                            })
-                            .onFailure(e -> {
-                                log.error("Failed to process image for comic {}: {}", entity.getComicNumber(), e.getMessage(), e);
-                                handleBackfillFailure(e, entity.getComicNumber(), fileName);
-                            });
+    private void fetchAndSaveImage(int comicNumber, String fileName) {
+        String key = "xkcd/%d".formatted(comicNumber);
+        log.info("Attempting to fetch image for comic {} with fileName '{}' and key '{}'",
+                comicNumber, fileName, key);
+
+        Try.of(() -> xkcdImageService.fetchImage(fileName))
+                .filter(this::isValidImageData)
+                .map(data -> {
+                    log.info("Successfully fetched and validated image for comic {} (size: {} bytes)",
+                            comicNumber, data.length);
+                    garageImageStorageService.save(key, data);
+                    log.info("Successfully saved image for comic {} to storage", comicNumber);
+                    return data;
                 })
-                .onEmpty(() -> log.warn("Comic {} has no valid image URL or filename", entity.getComicNumber()));
+                .onFailure(e -> handleImageFailure(e, comicNumber, fileName));
     }
 
     private boolean isValidImageData(byte[] data) {
@@ -252,28 +230,15 @@ public class ComicFetcher implements ComicService {
                 .getOrElse(false);
     }
 
-    private void handleImageCacheFailure(Throwable e, int comicNum, String fileName) {
-        log.warn("Failed to cache image for comic {} ({}): {}", comicNum, fileName, e.getMessage());
+    /** Unified image failure handler used by both cache & backfill paths. */
+    private void handleImageFailure(Throwable e, int comicNumber, String fileName) {
+        log.error("Image processing failed for comic {} ({}): {}", comicNumber, fileName, e.getMessage(), e);
     }
 
-    private void handleBackfillFailure(Throwable e, int comicNumber, String fileName) {
-        log.warn("Backfill: failed to cache image for comicNumber {} ({}): {}",
-                comicNumber, fileName, e.getMessage());
-    }
-
-    private String extractFileName(String url) {
+    private Optional<String> extractFileName(String url) {
         return Option.of(url)
                 .filter(u -> !u.isBlank())
-                .map(u -> {
-                    int comicsIdx = u.indexOf("/comics/");
-                    if (comicsIdx >= 0) {
-                        int start = comicsIdx + "/comics/".length();
-                        return start < u.length() ?
-                                u.substring(start).replaceFirst("^/+", "") : "";
-                    }
-                    int idx = u.lastIndexOf('/') + 1;
-                    return (idx <= 0 || idx >= u.length()) ? "" : u.substring(idx);
-                })
-                .getOrElse("");
+                .toJavaOptional()
+                .flatMap(Functions::extractComicsFileName);
     }
 }
