@@ -7,7 +7,7 @@ import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
-import io.minio.errors.ErrorResponseException;
+import io.minio.errors.*;
 import io.vavr.control.Try;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,6 +17,9 @@ import se.disabledsecurity.xkcd.fetcher.exception.BucketException;
 import se.disabledsecurity.xkcd.fetcher.exception.ImageStorageException;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.locks.StampedLock;
 import io.minio.http.Method;
 
@@ -46,23 +49,25 @@ public class GarageImageStorageService implements ImageStorageService {
         return Try.run(this::ensureBucketExistsOnce)
                 .flatMap(ignored ->
                         Try.withResources(() -> new ByteArrayInputStream(content))
-                                .of(bais -> {
-                                    String detectedContentType = tikaImageDetectionService
-                                            .detectContentType(content, contentType, key);
-
-                                    var args = PutObjectArgs.builder()
-                                            .bucket(garageProperties.getBucket())
-                                            .object(key)
-                                            .contentType(detectedContentType)
-                                            .stream(bais, content.length, -1)
-                                            .build();
-                                    minioClient.putObject(args);
-                                    log.debug("Stored image '{}' in bucket '{}' with content type '{}'",
-                                            key, garageProperties.getBucket(), detectedContentType);
-                                    return key;
-                                })
+                                .of(bais -> persistImage(key, content, contentType, bais))
                 )
                 .getOrElseThrow(e -> new ImageStorageException("Failed to store image: " + key, e));
+    }
+
+        private String persistImage(String key, byte[] content, String contentType, ByteArrayInputStream bais) {
+        String detectedContentType = tikaImageDetectionService
+                .detectContentType(content, contentType, key);
+
+        var args = PutObjectArgs.builder()
+                .bucket(garageProperties.getBucket())
+                .object(key)
+                .contentType(detectedContentType)
+                .stream(bais, content.length, -1)
+                .build();
+        minioClient.putObject(args);
+        log.debug("Stored image '{}' in bucket '{}' with content type '{}'",
+                key, garageProperties.getBucket(), detectedContentType);
+        return key;
     }
 
     @Override

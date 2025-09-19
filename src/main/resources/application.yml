@@ -65,3 +65,12 @@ garage:
     access-key: GK7f62badb97e1914dbe5519e4
     secret-key: 46a84b6f65eab83259172c1008676a218280d3392a45f79ecad040feeba5b41d
 
+httpclient:
+  max-total: 50
+  default-max-per-route: 20
+  redirects-enabled: true
+  circular-redirects-allowed: false
+  max-redirects: 20
+  connect-timeout: 5s
+  connection-request-timeout: 3s
+  response-timeout: 30s

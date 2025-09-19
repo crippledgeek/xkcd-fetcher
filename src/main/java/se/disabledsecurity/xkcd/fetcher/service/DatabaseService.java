@@ -11,7 +11,7 @@ public interface DatabaseService {
      * Saves the comics to the database and returns the saved entities.
      *
      * @param comics the comics to save (must not be null; elements must not be null)
-     * @return the saved entities; never null (may be empty if input had no savable items)
+          * @return the saved entities; never null (may be empty if input had no savable items)
      * @throws IllegalArgumentException if comics is null or contains null elements
      */
     List<Comic> saveComics(Iterable<Comic> comics);
