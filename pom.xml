@@ -36,6 +36,8 @@
         <vavr.version>0.10.7</vavr.version>
         <minio.version>8.5.17</minio.version>
         <tika-core.version>3.2.2</tika-core.version>
+        <imageName>${docker.image.prefix}/${project.artifactId}:${project.version}</imageName>
+        <docker.image.prefix>disabledsecurity</docker.image.prefix>
     </properties>
     <dependencies>
         <dependency>
@@ -160,6 +162,18 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <image>
+                        <env>
+                            <BP_HEALTH_CHECKER_ENABLED>true</BP_HEALTH_CHECKER_ENABLED>
+                        </env>
+                        <buildpacks>
+                            <buildpack>urn:cnb:builder:paketo-buildpacks/java</buildpack>
+                            <buildpack>gcr.io/paketo-buildpacks/health-checker:latest</buildpack>
+                        </buildpacks>
+                        <name>${imageName}</name>
+                        <createdDate>${maven.build.timestamp}</createdDate>
+                    </image>
+                    <imageBuilder>paketobuildpacks/builder-jammy-tiny</imageBuilder>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
@@ -170,5 +184,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
