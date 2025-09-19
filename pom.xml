@@ -173,7 +173,7 @@
                         <name>${imageName}</name>
                         <createdDate>${maven.build.timestamp}</createdDate>
                     </image>
-                    <imageBuilder>paketobuildpacks/builder-jammy-tiny</imageBuilder>
+                    <imageBuilder>bellsoft/buildpacks.builder:musl</imageBuilder>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
