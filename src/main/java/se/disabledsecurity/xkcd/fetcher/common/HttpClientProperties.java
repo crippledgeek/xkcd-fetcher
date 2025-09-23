@@ -13,16 +13,16 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "httpclient")
 public class HttpClientProperties {
 
-    /** Pooling */
+    /** Pooling. */
     private int maxTotal = 100;
     private int defaultMaxPerRoute = 20;
 
-    /** Redirects */
+    /** Redirects. */
     private boolean redirectsEnabled = true;
     private boolean circularRedirectsAllowed = false;
     private int maxRedirects = 20;
 
-    /** Timeouts */
+    /** Timeouts. */
     private Duration connectTimeout = Duration.ofSeconds(10);
     private Duration connectionRequestTimeout = Duration.ofSeconds(5);
     private Duration responseTimeout = Duration.ofSeconds(30);

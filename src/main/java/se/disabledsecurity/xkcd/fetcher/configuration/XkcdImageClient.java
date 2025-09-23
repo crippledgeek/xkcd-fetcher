@@ -4,14 +4,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 import se.disabledsecurity.xkcd.fetcher.common.XkcdProperties;
 import se.disabledsecurity.xkcd.fetcher.service.XKCDImageService;
-
-import java.net.http.HttpClient;
 
 @Configuration(proxyBeanMethods = false)
 public class XkcdImageClient {

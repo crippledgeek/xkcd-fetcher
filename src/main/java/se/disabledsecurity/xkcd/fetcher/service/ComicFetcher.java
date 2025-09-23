@@ -181,7 +181,7 @@ public class ComicFetcher implements ComicService {
         return Try.of(() ->
                 Option.of(posgreDatabaseService.getHighestComicNumber())
                         .flatMap(opt -> Option.of(opt.orElse(null)))
-                        .map(Functions.toUnboxed::applyAsInt)
+                        .map(Functions.TO_UNBOXED::applyAsInt)
                         .getOrElse(0)
         );
     }
@@ -229,7 +229,9 @@ public class ComicFetcher implements ComicService {
     }
 
     private boolean isValidImageData(byte[] data) {
-        if (data == null) return false;
+        if (data == null) {
+            return false;
+        }
 
         return Try.of(() -> javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(data)) != null)
                 .getOrElse(false);

@@ -134,13 +134,34 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.6.0</version>
+                <configuration>
+                    <configLocation>${project.basedir}/config/checkstyle/checkstyle.xml</configLocation>
+                    <failOnViolation>true</failOnViolation>
+                    <violationSeverity>warning</violationSeverity>
+                    <inputEncoding>UTF-8</inputEncoding>
+                    <outputEncoding>UTF-8</outputEncoding>
+                    <consoleOutput>true</consoleOutput>
+                    <outputFile>${project.build.directory}/checkstyle/checkstyle-report.xml</outputFile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
                 <configuration>
                     <release>21</release>
                     <encoding>UTF-8</encoding>
                     <parameters>true</parameters>
-
+                    <fork>true</fork>
                     <compilerArgs>
                         <!-- Java 21 module exports for Error Prone -->
                         <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
@@ -229,7 +250,6 @@
                     </layers>
                     <image>
                         <buildpacks>
-                            <buildpack>docker.io/paketobuildpacks/java</buildpack>
                             <buildpack>docker.io/paketobuildpacks/health-checker</buildpack>
                         </buildpacks>
                         <env>

@@ -40,13 +40,12 @@ public interface ComicMapper {
 
     @Named("stringToUrl")
     default URL stringToUrl(String url) {
-        return Functions.toUrl.apply(url)
+        return Functions.TO_URL.apply(url)
                 .getOrElseThrow(throwable -> new RuntimeException("Invalid URL format: %s".formatted(url), throwable));
     }
 
     @Named("dateFromXkcd")
     default LocalDate dateFromXkcd(Xkcd xkcd) {
-      return Functions.toDate.apply(xkcd.year(), xkcd.month(), xkcd.day());
-
+        return Functions.TO_DATE.apply(xkcd.year(), xkcd.month(), xkcd.day());
     }
 }

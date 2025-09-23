@@ -4,7 +4,6 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.net.URL;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 

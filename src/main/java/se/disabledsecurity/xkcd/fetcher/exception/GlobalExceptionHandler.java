@@ -92,6 +92,7 @@ public class GlobalExceptionHandler {
 
         return problemDetail;
     }
+
     @ExceptionHandler(BucketException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ProblemDetail handleBucketException(BucketException ex, HttpServletRequest request) {

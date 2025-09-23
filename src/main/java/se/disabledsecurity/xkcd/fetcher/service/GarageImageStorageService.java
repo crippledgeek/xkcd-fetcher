@@ -7,9 +7,13 @@ import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
-import io.minio.errors.*;
+import io.minio.errors.ErrorResponseException;
+import io.minio.errors.InsufficientDataException;
+import io.minio.errors.InternalException;
+import io.minio.errors.InvalidResponseException;
+import io.minio.errors.ServerException;
+import io.minio.errors.XmlParserException;
 import io.vavr.control.Try;
-import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import se.disabledsecurity.xkcd.fetcher.common.GarageProperties;
@@ -55,7 +59,15 @@ public class GarageImageStorageService implements ImageStorageService {
                 .getOrElseThrow(e -> new ImageStorageException("Failed to store image: " + key, e));
     }
 
-        private String persistImage(String key, byte[] content, @javax.annotation.Nullable String contentType, ByteArrayInputStream bais) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    private String persistImage(
+            String key,
+            byte[] content,
+            @javax.annotation.Nullable String contentType,
+            ByteArrayInputStream bais
+    ) throws ServerException, InsufficientDataException, ErrorResponseException, IOException,
+            NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException,
+            XmlParserException, InternalException {
+
         String detectedContentType = tikaImageDetectionService
                 .detectContentType(content, contentType != null ? contentType : "", key);
 
@@ -93,14 +105,7 @@ public class GarageImageStorageService implements ImageStorageService {
 
     @Override
     public boolean exists(String key) {
-        return Try.of(() -> {
-                    StatObjectResponse response = minioClient.statObject(
-                            StatObjectArgs.builder()
-                                    .bucket(requiredBucket())
-                                    .object(key)
-                                    .build());
-                    return response.size() > 0;
-                })
+        return Try.of(() -> statObject(key))
                 .recover(ErrorResponseException.class, e -> {
                     String code = e.errorResponse() != null ? e.errorResponse().code() : null;
                     int status = e.response() != null ? e.response().code() : -1;
@@ -115,6 +120,19 @@ public class GarageImageStorageService implements ImageStorageService {
                     return false;
                 })
                 .get();
+    }
+
+    private boolean statObject(String key) throws ErrorResponseException,
+                                            InsufficientDataException, InternalException, InvalidKeyException,
+                                            InvalidResponseException, IOException,
+                                            NoSuchAlgorithmException, ServerException, XmlParserException {
+
+        StatObjectResponse response = minioClient.statObject(
+                StatObjectArgs.builder()
+                        .bucket(requiredBucket())
+                        .object(key)
+                        .build());
+        return response.size() > 0;
     }
 
     @Override

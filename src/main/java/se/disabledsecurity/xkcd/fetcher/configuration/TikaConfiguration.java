@@ -28,7 +28,7 @@ public class TikaConfiguration {
     }
 
     /**
-     * Optional: Expose the detector separately if needed for advanced use cases
+     * Optional: Expose the detector separately if needed for advanced use cases.
      */
     @Bean
     public Detector detector(TikaConfig tikaConfig) {

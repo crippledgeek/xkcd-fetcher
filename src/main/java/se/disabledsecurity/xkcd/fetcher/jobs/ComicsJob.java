@@ -1,6 +1,5 @@
 package se.disabledsecurity.xkcd.fetcher.jobs;
 
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
@@ -35,6 +34,6 @@ public class ComicsJob implements Job {
         log.info("Fetched {} comics", count);
 
         Try.run(comicService::backfillImagesFromDb)
-           .onFailure(e -> log.warn("Image backfill job step failed: {}", e.getMessage()));
+                .onFailure(e -> log.warn("Image backfill job step failed: {}", e.getMessage()));
     }
 }

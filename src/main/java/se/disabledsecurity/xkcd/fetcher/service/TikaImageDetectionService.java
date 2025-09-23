@@ -83,7 +83,7 @@ public class TikaImageDetectionService implements ImageDetectionService {
     public boolean isValidImageContentType(@Nullable String contentType) {
         return contentType != null
                 && !contentType.trim().isEmpty()
-                && !contentType.equals("application/octet-stream")
+                && !"application/octet-stream".equals(contentType)
                 && contentType.startsWith("image/");
     }
 

@@ -7,7 +7,12 @@ import se.disabledsecurity.xkcd.fetcher.entity.Comic;
 import se.disabledsecurity.xkcd.fetcher.repository.ComicRepository;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
