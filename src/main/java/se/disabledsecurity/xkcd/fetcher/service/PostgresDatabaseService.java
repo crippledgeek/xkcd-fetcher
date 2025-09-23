@@ -79,7 +79,7 @@ public class PostgresDatabaseService implements DatabaseService {
                 .collect(Collectors.toList());
     }
 
-    private Comic mergeComic(Comic incoming, Comic existing) {
+    private Comic mergeComic(Comic incoming, @javax.annotation.Nullable Comic existing) {
         if (existing == null) {
             log.debug("Creating new comic with number {}", incoming.getComicNumber());
             incoming.setId(null); // Ensure insert

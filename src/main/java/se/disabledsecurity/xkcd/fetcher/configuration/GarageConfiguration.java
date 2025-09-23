@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import se.disabledsecurity.xkcd.fetcher.common.GarageProperties;
 import se.disabledsecurity.xkcd.fetcher.common.HttpClientProperties;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @Configuration(proxyBeanMethods = false)
@@ -44,14 +45,17 @@ public class GarageConfiguration {
 
     @Bean
     public MinioClient garageClient(OkHttpClient garageHttpClient) {
-        return MinioClient.builder()
-                .endpoint(garageProperties.getEndpoint().toString())
-                .region(garageProperties.getRegion())
-                .credentials(
-                        garageProperties.getCredentials().getAccessKey(),
-                        garageProperties.getCredentials().getSecretKey()
+        var creds = Objects.requireNonNull(garageProperties.getCredentials(), "garage.credentials must be set");
+        var endpoint = Objects.requireNonNull(garageProperties.getEndpoint(), "garage.endpoint must be set");
+        MinioClient.Builder builder = MinioClient.builder()
+                .endpoint(endpoint.toString())
+                .credentials(Objects.requireNonNull(creds.getAccessKey(), "garage.credentials.accessKey must be set"),
+                             Objects.requireNonNull(creds.getSecretKey(), "garage.credentials.secretKey must be set")
                 )
-                .httpClient(garageHttpClient)
-                .build();
+                .httpClient(garageHttpClient);
+        if (garageProperties.getRegion() != null && !garageProperties.getRegion().isBlank()) {
+            builder.region(garageProperties.getRegion());
+        }
+        return builder.build();
     }
 }

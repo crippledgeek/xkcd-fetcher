@@ -1,5 +1,6 @@
 package se.disabledsecurity.xkcd.fetcher.configuration;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -24,14 +25,14 @@ public class XkcdClient {
     public RestClient comicClient(RestClient.Builder builder, ClientHttpRequestFactory requestFactory) {
         return builder
             .requestFactory(requestFactory)
-            .baseUrl(properties.getComicBaseUrl().toString())
+            .baseUrl(java.util.Objects.requireNonNull(properties.getComicBaseUrl(), "xkcd.comic-base-url must be set").toString())
             .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
             .defaultHeader(HttpHeaders.USER_AGENT, "XKCD Fetcher")
             .build();
     }
 
     @Bean
-    public XKCDComicService comicServiceProxyFactory(RestClient comicClient) {
+    public XKCDComicService comicServiceProxyFactory(@Qualifier("comicClient")RestClient comicClient) {
         return HttpServiceProxyFactory
                 .builderFor(RestClientAdapter.create(comicClient))
                 .build()

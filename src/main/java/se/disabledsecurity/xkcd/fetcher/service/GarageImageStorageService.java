@@ -9,6 +9,7 @@ import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
 import io.minio.errors.*;
 import io.vavr.control.Try;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import se.disabledsecurity.xkcd.fetcher.common.GarageProperties;
@@ -45,7 +46,7 @@ public class GarageImageStorageService implements ImageStorageService {
     }
 
     @Override
-    public String save(String key, byte[] content, String contentType) {
+    public String save(String key, byte[] content, @javax.annotation.Nullable String contentType) {
         return Try.run(this::ensureBucketExistsOnce)
                 .flatMap(ignored ->
                         Try.withResources(() -> new ByteArrayInputStream(content))
@@ -54,19 +55,19 @@ public class GarageImageStorageService implements ImageStorageService {
                 .getOrElseThrow(e -> new ImageStorageException("Failed to store image: " + key, e));
     }
 
-        private String persistImage(String key, byte[] content, String contentType, ByteArrayInputStream bais) {
+        private String persistImage(String key, byte[] content, @javax.annotation.Nullable String contentType, ByteArrayInputStream bais) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         String detectedContentType = tikaImageDetectionService
-                .detectContentType(content, contentType, key);
+                .detectContentType(content, contentType != null ? contentType : "", key);
 
         var args = PutObjectArgs.builder()
-                .bucket(garageProperties.getBucket())
+                .bucket(requiredBucket())
                 .object(key)
                 .contentType(detectedContentType)
                 .stream(bais, content.length, -1)
                 .build();
         minioClient.putObject(args);
         log.debug("Stored image '{}' in bucket '{}' with content type '{}'",
-                key, garageProperties.getBucket(), detectedContentType);
+                key, requiredBucket(), detectedContentType);
         return key;
     }
 
@@ -80,12 +81,12 @@ public class GarageImageStorageService implements ImageStorageService {
         try {
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
-                            .bucket(garageProperties.getBucket())
+                            .bucket(requiredBucket())
                             .object(key)
                             .build());
-            log.debug("Deleted image '{}' from bucket '{}'", key, garageProperties.getBucket());
+            log.debug("Deleted image '{}' from bucket '{}'", key, requiredBucket());
         } catch (Exception e) {
-            log.error("Failed to delete image '{}' from bucket '{}': {}", key, garageProperties.getBucket(), e.getMessage());
+            log.error("Failed to delete image '{}' from bucket '{}': {}", key, requiredBucket(), e.getMessage());
             throw new ImageStorageException("Failed to delete image: " + key, e);
         }
     }
@@ -95,7 +96,7 @@ public class GarageImageStorageService implements ImageStorageService {
         return Try.of(() -> {
                     StatObjectResponse response = minioClient.statObject(
                             StatObjectArgs.builder()
-                                    .bucket(garageProperties.getBucket())
+                                    .bucket(requiredBucket())
                                     .object(key)
                                     .build());
                     return response.size() > 0;
@@ -121,7 +122,7 @@ public class GarageImageStorageService implements ImageStorageService {
         return Try.of(() -> minioClient.getPresignedObjectUrl(
                         GetPresignedObjectUrlArgs.builder()
                                 .method(Method.GET)
-                                .bucket(garageProperties.getBucket())
+                                .bucket(requiredBucket())
                                 .object(key)
                                 .build()))
                 .onFailure(e -> log.warn("Failed to get presigned URL for '{}': {}", key, e.getMessage()))
@@ -145,11 +146,15 @@ public class GarageImageStorageService implements ImageStorageService {
         }
 
         urlBuilder.append("/")
-                .append(garageProperties.getBucket())
+                .append(requiredBucket())
                 .append("/")
                 .append(key);
 
         return urlBuilder.toString();
+    }
+
+    private String requiredBucket() {
+        return java.util.Objects.requireNonNull(garageProperties.getBucket(), "garage.bucket must be set");
     }
 
     private void ensureBucketExistsOnce() {
@@ -188,7 +193,7 @@ public class GarageImageStorageService implements ImageStorageService {
     }
 
     private void performBucketCheck() {
-        String bucket = garageProperties.getBucket();
+        String bucket = requiredBucket();
 
         try {
             boolean exists = minioClient.bucketExists(

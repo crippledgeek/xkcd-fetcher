@@ -13,6 +13,6 @@ public interface XKCDComicService {
     @GetExchange("/info.0.json")
     Xkcd getLatestComic();
     @GetExchange("/{comicId}/info.0.json")
-    Xkcd getComicById(@PathVariable int comicId);
+    Xkcd getComicById(@PathVariable("comicId") int comicId);
 
 }

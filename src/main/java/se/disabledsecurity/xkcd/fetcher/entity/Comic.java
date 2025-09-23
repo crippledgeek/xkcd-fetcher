@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import javax.annotation.Nullable;
 
 @Getter
 @Setter
@@ -14,20 +15,26 @@ public class Comic {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
+    @Nullable
     private Long id;
     
     @Column(name = "comic_number", nullable = false, unique = true)
+    @Nullable
     private Integer comicNumber;
     
     @Column(name = "title", columnDefinition = "TEXT")
+    @Nullable
     private String title;
     
     @Column(name = "img", columnDefinition = "TEXT")
+    @Nullable
     private String img;
     
     @Column(name = "alt", columnDefinition = "TEXT")
+    @Nullable
     private String alt;
     
     @Column(name = "publication_date")
+    @Nullable
     private LocalDate publicationDate;
  }

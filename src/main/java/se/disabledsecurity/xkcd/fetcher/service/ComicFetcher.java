@@ -198,11 +198,16 @@ public class ComicFetcher implements ComicService {
     }
 
     private void backfillSingleImage(se.disabledsecurity.xkcd.fetcher.entity.Comic entity) {
-        log.info("Processing backfill for comic {}", entity.getComicNumber());
+        Integer num = entity.getComicNumber();
+        if (num == null) {
+            log.warn("Skipping backfill: comic has no comicNumber (title: {})", entity.getTitle());
+            return;
+        }
+        log.info("Processing backfill for comic {}", num);
 
         extractFileName(entity.getImg()).ifPresentOrElse(
-                fileName -> fetchAndSaveImage(entity.getComicNumber(), fileName),
-                () -> log.warn("Comic {} has no valid image URL or filename", entity.getComicNumber())
+                fileName -> fetchAndSaveImage(num.intValue(), fileName),
+                () -> log.warn("Comic {} has no valid image URL or filename", num)
         );
     }
 
@@ -235,7 +240,7 @@ public class ComicFetcher implements ComicService {
         log.error("Image processing failed for comic {} ({}): {}", comicNumber, fileName, e.getMessage(), e);
     }
 
-    private Optional<String> extractFileName(String url) {
+    private Optional<String> extractFileName(@javax.annotation.Nullable String url) {
         return Option.of(url)
                 .filter(u -> !u.isBlank())
                 .toJavaOptional()

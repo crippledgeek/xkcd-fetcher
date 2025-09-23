@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Nullable;
+
 /**
  * Service for detecting image content types using Apache Tika.
  */
@@ -26,12 +28,13 @@ public class TikaImageDetectionService implements ImageDetectionService {
      * @param filename the filename or key (used for extension-based detection)
      * @return the detected content type, defaulting to "application/octet-stream"
      */
-    public String detectContentType(byte[] content, String providedContentType, String filename) {
+    @Override
+    public String detectContentType(byte[] content, @Nullable String providedContentType, @Nullable String filename) {
         try {
             // Strategy 1: Use the provided content type if valid
             if (isValidImageContentType(providedContentType)) {
                 log.debug("Using provided content type '{}' for '{}'", providedContentType, filename);
-                return providedContentType;
+                return java.util.Objects.requireNonNull(providedContentType);
             }
 
             // Strategy 2: Detect from content using Tika
@@ -55,7 +58,7 @@ public class TikaImageDetectionService implements ImageDetectionService {
         } catch (Exception e) {
             log.warn("Error detecting content type for '{}': {}", filename, e.getMessage());
             return isValidImageContentType(providedContentType) ?
-                    providedContentType : "application/octet-stream";
+                    java.util.Objects.requireNonNullElse(providedContentType, "application/octet-stream") : "application/octet-stream";
         }
     }
 
@@ -65,6 +68,7 @@ public class TikaImageDetectionService implements ImageDetectionService {
      * @param content the image bytes
      * @return the detected content type
      */
+    @Override
     public String detectContentType(byte[] content) {
         return detectContentType(content, null, "unknown");
     }
@@ -75,7 +79,8 @@ public class TikaImageDetectionService implements ImageDetectionService {
      * @param contentType the content type to validate
      * @return true if it's a valid image content type
      */
-    public boolean isValidImageContentType(String contentType) {
+    @Override
+    public boolean isValidImageContentType(@Nullable String contentType) {
         return contentType != null
                 && !contentType.trim().isEmpty()
                 && !contentType.equals("application/octet-stream")
@@ -88,6 +93,7 @@ public class TikaImageDetectionService implements ImageDetectionService {
      * @param content the bytes to analyze
      * @return true if the content appears to be an image
      */
+    @Override
     public boolean isImage(byte[] content) {
         try {
             String contentType = tika.detect(content);

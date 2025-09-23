@@ -1,5 +1,6 @@
 package se.disabledsecurity.xkcd.fetcher.configuration;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -25,13 +26,13 @@ public class XkcdImageClient {
     public RestClient comicImageClient(RestClient.Builder builder, ClientHttpRequestFactory requestFactory) {
         return builder
                 .requestFactory(requestFactory)
-                .baseUrl(properties.getImageBaseUrl().toString())
+                .baseUrl(java.util.Objects.requireNonNull(properties.getImageBaseUrl(), "xkcd.image-base-url must be set").toString())
                 .defaultHeader("User-Agent", "XKCD Fetcher - Image Client")
                 .build();
     }
 
     @Bean
-    public XKCDImageService imageServiceProxyFactory(RestClient comicImageClient) {
+    public XKCDImageService imageServiceProxyFactory(@Qualifier("comicImageClient")RestClient comicImageClient) {
         return HttpServiceProxyFactory
                 .builderFor(RestClientAdapter.create(comicImageClient))
                 .build()

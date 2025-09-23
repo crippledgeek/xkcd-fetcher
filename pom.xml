@@ -35,6 +35,10 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <vavr.version>0.10.7</vavr.version>
         <minio.version>8.5.17</minio.version>
+        <!-- Working Error Prone versions -->
+        <errorprone.version>2.28.0</errorprone.version>
+        <plexus.errorprone.version>2.8.8</plexus.errorprone.version>
+        <nullaway.version>0.10.21</nullaway.version>
         <tika-core.version>3.2.2</tika-core.version>
         <imageName>${docker.image.prefix}/${project.artifactId}:${project.version}</imageName>
         <docker.image.prefix>disabledsecurity</docker.image.prefix>
@@ -131,8 +135,42 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
                 <configuration>
+                    <release>21</release>
+                    <encoding>UTF-8</encoding>
+                    <parameters>true</parameters>
+
+                    <compilerArgs>
+                        <!-- Java 21 module exports for Error Prone -->
+                        <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+                        <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
+                        <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
+                        <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>
+                        <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
+                        <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
+                        <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
+                        <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+                        <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
+                        <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED</arg>
+                        <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
+                        <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
+                        <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
+                        <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
+                        <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>
+                        <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
+                        <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
+                        <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
+                        <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+                        <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+
+                        <!-- Error Prone direct plugin approach -->
+                        <arg>-XDcompilePolicy=simple</arg>
+                        <arg>-Xplugin:ErrorProne -Xep:NullAway:ERROR -XepOpt:NullAway:AnnotatedPackages=se.disabledsecurity -XepOpt:NullAway:TreatGeneratedAsUnannotated=true -XepDisableWarningsInGeneratedCode</arg>
+                    </compilerArgs>
+
                     <annotationProcessorPaths>
+                        <!-- Your existing annotation processors -->
                         <path>
                             <groupId>org.mapstruct</groupId>
                             <artifactId>mapstruct-processor</artifactId>
@@ -148,28 +186,56 @@
                             <artifactId>lombok-mapstruct-binding</artifactId>
                             <version>${lombok-mapstruct-binding.version}</version>
                         </path>
+                        <path>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                            <version>${project.parent.version}</version>
+                        </path>
+                        <!-- Add Error Prone and NullAway here -->
+                        <path>
+                            <groupId>com.google.errorprone</groupId>
+                            <artifactId>error_prone_core</artifactId>
+                            <version>${errorprone.version}</version>
+                        </path>
+                        <path>
+                            <groupId>com.uber.nullaway</groupId>
+                            <artifactId>nullaway</artifactId>
+                            <version>${nullaway.version}</version>
+                        </path>
                     </annotationProcessorPaths>
                 </configuration>
+                <!-- Remove the dependencies section entirely -->
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-
-                </configuration>
-            </plugin>
-            <plugin>
+           <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>process-aot</id>
+                        <goals>
+                            <goal>process-aot</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>process-test-aot</id>
+                        <goals>
+                            <goal>process-test-aot</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
+                    <layers>
+                        <enabled>true</enabled>
+                    </layers>
                     <image>
+                        <buildpacks>
+                            <buildpack>docker.io/paketobuildpacks/java</buildpack>
+                            <buildpack>docker.io/paketobuildpacks/health-checker</buildpack>
+                        </buildpacks>
                         <env>
+                            <BP_SPRING_AOT_ENABLED>true</BP_SPRING_AOT_ENABLED>
                             <BP_HEALTH_CHECKER_ENABLED>true</BP_HEALTH_CHECKER_ENABLED>
                         </env>
-                        <buildpacks>
-                            <buildpack>urn:cnb:builder:paketo-buildpacks/java</buildpack>
-                            <buildpack>gcr.io/paketo-buildpacks/health-checker:latest</buildpack>
-                        </buildpacks>
                         <name>${imageName}</name>
                         <createdDate>${maven.build.timestamp}</createdDate>
                     </image>

@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.net.URL;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Configuration properties for interacting with the XKCD API.
@@ -31,11 +32,13 @@ public class XkcdProperties {
     /**
      * The base URL for xkcd comics.
      */
+    @Nullable
     private URL comicBaseUrl;
 
     /**
      * The base URL for retrieving xkcd comic images.
      */
+    @Nullable
     private URL imageBaseUrl;
 
     /**
