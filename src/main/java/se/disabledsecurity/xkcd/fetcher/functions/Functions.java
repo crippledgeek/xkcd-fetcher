@@ -43,7 +43,7 @@ public final class Functions {
     }
 
     /** General extractor: tries markers in order; falls back to last path segment. */
-    public static Optional<String> apply(String u, String... markers) {
+    public static Optional<String> extractAfterMarkers(String u, String... markers) {
         if (u == null || u.isBlank()) {
             return Optional.empty();
         }
@@ -62,7 +62,7 @@ public final class Functions {
 
     /** Convenience for your current need: only "/comics/". */
     public static Optional<String> extractComicsFileName(String url) {
-        return apply(url, "/comics/");
+        return extractAfterMarkers(url, "/comics/");
     }
 
     // --- helpers ---
