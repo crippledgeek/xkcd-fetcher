@@ -206,7 +206,7 @@ public class ComicFetcher implements ComicService {
         log.info("Processing backfill for comic {}", num);
 
         extractFileName(entity.getImg()).ifPresentOrElse(
-                fileName -> fetchAndSaveImage(num.intValue(), fileName),
+                fileName -> fetchAndSaveImage(num, fileName),
                 () -> log.warn("Comic {} has no valid image URL or filename", num)
         );
     }
