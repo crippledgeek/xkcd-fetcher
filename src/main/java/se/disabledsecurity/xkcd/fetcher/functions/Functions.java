@@ -39,14 +39,19 @@ public final class Functions {
 
     public static final Function<String, Pattern> COMPILE_PATTERN = Pattern::compile;
 
+    // Reusable predicate to test for non-null and non-blank strings
+    public static final Predicate<String> NON_BLANK = s -> s != null && !s.isBlank();
+
     private Functions() {
     }
 
-    /** General extractor: tries markers in order; falls back to last path segment. */
+    /** General extractor: tries markers in order; falls back to the last path segment. */
     public static Optional<String> extractAfterMarkers(String u, String... markers) {
         if (u == null || u.isBlank()) {
             return Optional.empty();
         }
+
+
 
         return Arrays.stream(markers)
                 .filter(marker -> marker != null && !marker.isBlank())
